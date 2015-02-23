@@ -1,7 +1,7 @@
 var options = {
   'player_image': 'images/char-boy.png',
-  'num_enemies': 6,
-  'move_by': 100,
+  'num_enemies': 8,
+  'move_by': 75,
   'increase_move_by': 100,
   'width': 505,
   'height': 606,
@@ -45,18 +45,21 @@ Enemy.prototype.constructor = Enemy;
 // Customize Enemy Class
 // Place an Enemy in a random row.
 Enemy.prototype.generate = function() {
-  this.setPosition(0, getRandomInt(2, 4 + 1));
+  // Get a random y coordinate within the range of stone rows.
+  this.row = getRandomInt(2, 5);
+  var y = (this.row - 1)  * options.space_height;
+  // Offset the y value a bit so it is centered.
+  var y_center_in_row = y - options.space_height / 4;
+  this.setPosition(0, y_center_in_row);
 };
 Enemy.prototype.isOffScreen = function() {
-  console.log('isOffScreen ' + this.x_pos > options.width);
   return this.x_pos > options.width;
 };
 // Update the enemy's position, required method for game
 // Parameter: dt, a time delta between ticks
 Enemy.prototype.update = function(dt) {
-  //console.log('Entering ' + this.type + '.update');
-  this.x_pos += options.move_by * dt;
-  if (this.isOffScreen) this.generate();
+  this.x_pos += options.move_by * (6 - this.row) * dt;
+  if (this.isOffScreen()) this.generate();
 };
 
 // Our player
