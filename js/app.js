@@ -10,29 +10,28 @@ var options = {
 };
 
 function getRandomInt(min, max) {
-  return Math.floor(Math.random() * (max - min)) + min;
+  var number = Math.floor(Math.random() * (max - min)) + min;
+  console.log('Enemy in row ' + number);
+  return number;
+  //return Math.floor(Math.random() * (max - min)) + min;
 }
 
 // Prototype class
 var Entity = function(type, sprite) {
-  this.set_type(type);
-  this.set_sprite(sprite);
+  this.setType(type);
+  this.setSprite(sprite);
 };
-Entity.prototype.set_type = function(type) {
-  console.log('Entering ' + this.type + '.set_type');
+Entity.prototype.setType = function(type) {
   this.type = type;
 };
-Entity.prototype.set_sprite = function(sprite) {
-  console.log('Entering ' + this.type + '.set_sprite');
+Entity.prototype.setSprite = function(sprite) {
   this.sprite = sprite;
 };
-Entity.prototype.set_position = function(x, y) {
-  //console.log('Entering ' + this.type + '.set_position');
+Entity.prototype.setPosition = function(x, y) {
   this.x_pos = x;
   this.y_pos = y;
 };
 Entity.prototype.render = function() {
-  //console.log('Entering ' + this.type + '.render');
   ctx.drawImage(Resources.get(this.sprite), this.x_pos, this.y_pos);
 };
 
@@ -46,7 +45,7 @@ Enemy.prototype.constructor = Enemy;
 // Customize Enemy Class
 // Place an Enemy in a random row.
 Enemy.prototype.generate = function() {
-  this.set_position(0, getRandomInt(1, 3));
+  this.setPosition(0, getRandomInt(2, 4 + 1));
 };
 Enemy.prototype.isOffScreen = function() {
   console.log('isOffScreen ' + this.x_pos > options.width);
@@ -63,11 +62,6 @@ Enemy.prototype.update = function(dt) {
 // Our player
 var Player = function(sprite) {
   Entity.call(this, 'Player', sprite);
-  this.col = 3;
-  this.row = 6;
-  this.move_x = 0;
-  this.move_y = 0;
-  this.move = false;
   this.reset();
 };
 // Set up delegation to Entity
@@ -76,111 +70,145 @@ Player.prototype.constructor = Player;
 // Customize Player Class
 // Place Player in starting position centered at the bottom.
 Player.prototype.reset = function() {
-  var x = (this.col - 1) * options.space_width;
-  var y = (this.row - 1) * options.space_height;
-  console.log('Resetting Player to ' + x + ',' + y);
-  this.set_position(x, y);
+  this.col = 3;
+  this.row = 6;
+  this.move_x = 0;
+  this.move_y = 0;
+  this.move = false;
+  this.setPosition((this.col - 1) * options.space_width,
+                    (this.row - 1) * options.space_height);
 };
-Player.prototype.atBound = function() {
-  return this.row === 1 ||
-         this.row === 6 ||
-         this.col === 1 ||
-         this.col === 5;
-};
+// Check to see if Player's new column and row position is in bounds.
 Player.prototype.inBound = function(col_num, row_num) {
   return col_num >= 1 &&
          col_num <= 5 &&
          row_num >= 1 &&
          row_num <= 6;
 };
-Player.prototype.won = function() {
+Player.prototype.hasWon = function() {
   return this.row === 1;
 };
+Player.prototype.isHit = function() {
+  // TODO
+  return false;
+};
+Player.prototype.isDone = function() {
+  return this.hasWon() || this.isHit();
+};
+// Set the axis ('x' or 'y') and direction of movement (+/- 1).
 Player.prototype.setDirection = function(move_axis, direction_value) {
-  if (move_axis === 'x') {
+  if (move_axis.toLowerCase() === 'x') {
     this.move_x = direction_value;
     this.move_y = 0;
-  }
-  else if (move_axis === 'y') {
+  } else if (move_axis.toLowerCase() === 'y') {
     this.move_x = 0;
     this.move_y = direction_value;
+  } else {
+    new Error('Player.setDirection received an ' +
+              'invalid value for move_axis, ' +
+              move_axis +
+              '. Valid values are "x" or "y" only.');
   }
 };
+// Switch movement on/off after one keypress/update cycle.
+// Player only moves once unlike Enemies who move continuously.
 Player.prototype.toggleMove = function() {
   this.move = ! this.move;
 };
+// Set appropriate actions depending on key pressed.
 Player.prototype.handleInput = function(keyCode) {
-  //if (! this.atBound()) {
-    switch (keyCode) {
-      case "left":
-        this.setDirection('x', -1);
-        break;
-      case "right":
-        this.setDirection('x', 1);
-        break;
-      case "up":
-        this.setDirection('y', -1);
-        break;
-      case "down":
-        this.setDirection('y', 1);
+  switch (keyCode) {
+    case "left":
+      this.setDirection('x', -1);
+      break;
+    case "right":
+      this.setDirection('x', 1);
+      break;
+    case "up":
+      this.setDirection('y', -1);
+      break;
+    case "down":
+      this.setDirection('y', 1);
+      break;
+    default:
+      // No-Op
+      break;
+  }
+  console.log('Received ' + keyCode +
+              ' set move factors to ' +
+              this.move_x + ',' +  this.move_y);
+  this.toggleMove();
+};
+// Update Player's position (both column,row and x,y).
+Player.prototype.update = function() {
+  // Ensure Player is supposed to move on this cycle.
+  if (this.move) {
+    // Determine the next position (column,row).
+    var new_col = this.col + this.move_x * 1;
+    var new_row = this.row + this.move_y * 1;
+    if (this.inBound(new_col, new_row)) {
+      this.col = new_col;
+      this.row = new_row;
+      this.x_pos += this.move_x * options.space_width;
+      this.y_pos += this.move_y * options.space_height;
+    }
+    // Switch movement off after movement completed.
+    this.toggleMove();
+  }
+};
+Player.prototype.render = function() {
+  Entity.prototype.render.call(this);
+  if (this.isDone() && !game_over) {
+    game_over = true;
+    var prompt = 'Do you want to play again?';
+    if (this.hasWon()) {
+      console.log('Player Won!');
+      prompt = 'Congratulations, you won! ' + prompt;
+    }
+    else {
+      prompt = 'Sorry, but an Enemy got you. ' + prompt;
+    }
+    switch (confirm(prompt)) {
+      case (true):
+        //Engine.init();
         break;
       default:
         break;
     }
-    console.log('Received ' + keyCode +
-                ' set move factors to ' +
-                this.move_x + ',' +  this.move_y);
-    this.toggleMove();
-  //}
-};
-Player.prototype.update = function() {
-  //console.log('Entering ' + this.type + '.update');
-  if (this.move) {
-    /*
-    if (this.move_x !== 0) {
-      console.log('X Pos ' + this.x_pos + ' + Move X ' + this.move_x + ' Width ' +  options.space_width + ' (' + this.move_x * options.space_width + ')' + '=' + this.x_pos + this.move_x * options.space_width);
-      //this.x_pos += this.move_x * options.space_width;
-    }
-    if (this.move_y !== 0) {
-      console.log('Y Pos ' + this.y_pos + ' + Move Y ' + this.move_y + ' Width ' +  options.space_width + ' (' + this.move_y * options.space_width + ')' + '=' + this.y_pos + this.move_y * options.space_width);
-      //this.y_pos += this.move_y * options.space_height;
-    }
-    */
-    var new_col = this.col + this.move_x * 1;
-    var new_row = this.row + this.move_y * 1;
-    console.log(this.col + this.move_x * 1);
-    console.log(this.row + this.move_y * 1);
-    if (this.inBound(new_col, new_row)) {
-      this.col += this.move_x * 1;
-      this.row += this.move_y * 1;
-      this.x_pos += this.move_x * options.space_width;
-      this.y_pos += this.move_y * options.space_height;
-    }
-    this.toggleMove();
   }
 };
 
-// Place all enemy objects in an array called allEnemies
-var allEnemies = [];
-// Distribute enemies over each of the three rows.
-for (i = 0; i < options.num_enemies; i++) {
-    //var enemy = new Enemy('images/enemy-bug.png');
-    //enemy.generate();
-    //allEnemies.push(enemy);
+function start() {
+  // Place all enemy objects in an array called allEnemies
+  allEnemies = [];
+  // Distribute enemies over each of the three rows.
+  for (i = 0; i < options.num_enemies; i++) {
+      var enemy = new Enemy('images/enemy-bug.png');
+      enemy.generate();
+      allEnemies.push(enemy);
+  }
+
+  // Place the player object in a variable called player
+  player = new Player(options.player_image);
+
+  // This listens for key presses and sends the keys to your
+  // Player.handleInput() method. You don't need to modify this.
+  document.addEventListener('keyup', function(e) {
+      var allowedKeys = {
+          37: 'left',
+          38: 'up',
+          39: 'right',
+          40: 'down'
+      };
+
+      player.handleInput(allowedKeys[e.keyCode]);
+  });
+
+  game_over = false;
 }
 
-// Place the player object in a variable called player
-var player = new Player(options.player_image);
+var allEnemies;
+var player;
+var game_over;
 
-// This listens for key presses and sends the keys to your
-// Player.handleInput() method. You don't need to modify this.
-document.addEventListener('keyup', function(e) {
-    var allowedKeys = {
-        37: 'left',
-        38: 'up',
-        39: 'right',
-        40: 'down'
-    };
-
-    player.handleInput(allowedKeys[e.keyCode]);
-});
+start();
