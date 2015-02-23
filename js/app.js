@@ -9,23 +9,14 @@ var options = {
   'space_height': 83
 };
 
-function get_new_position(position, movement, width, wrap) {
-  var new_position = (wrap) ?
-    (position + movement) % width :
-    position;
-  return new_position;
-}
-
 function getRandomInt(min, max) {
   return Math.floor(Math.random() * (max - min)) + min;
 }
 
 // Prototype class
-var Entity = function(type, sprite, x, y, wrap) {
+var Entity = function(type, sprite) {
   this.set_type(type);
   this.set_sprite(sprite);
-  this.set_position(x, y);
-  this.set_wrap_move(wrap);
 };
 Entity.prototype.set_type = function(type) {
   console.log('Entering ' + this.type + '.set_type');
@@ -36,115 +27,150 @@ Entity.prototype.set_sprite = function(sprite) {
   this.sprite = sprite;
 };
 Entity.prototype.set_position = function(x, y) {
-  console.log('Entering ' + this.type + '.set_position');
-  this.x_pos = (x > 0) ? x : 0;
-  this.y_pos = (y > 0) ? y : 0;
-};
-Entity.prototype.set_wrap_move = function(wrap) {
-  console.log('Entering ' + this.type + '.set_wrap_move');
-  this.wrap = wrap;
+  //console.log('Entering ' + this.type + '.set_position');
+  this.x_pos = x;
+  this.y_pos = y;
 };
 Entity.prototype.render = function() {
-  console.log('Entering ' + this.type + '.render');
+  //console.log('Entering ' + this.type + '.render');
   ctx.drawImage(Resources.get(this.sprite), this.x_pos, this.y_pos);
 };
 
 // Enemies our player must avoid
-//var Enemy = function() {
-    // Variables applied to each of our instances go here,
-    // we've provided one for you to get started
-
-    // The image/sprite for our enemies, this uses
-    // a helper we've provided to easily load images
-//    this.sprite = 'images/enemy-bug.png';
-//};
-
-// Update the enemy's position, required method for game
-// Parameter: dt, a time delta between ticks
-//Enemy.prototype.update = function(dt) {
-    // You should multiply any movement by the dt parameter
-    // which will ensure the game runs at the same speed for
-    // all computers.
-//};
-
-// Draw the enemy on the screen, required method for game
-//Enemy.prototype.render = function() {
-//    ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
-//};
-
-var Enemy = function(sprite, x, y) {
-  Entity.call(this, 'Enemy', sprite, x, y, true);
+var Enemy = function(sprite) {
+  Entity.call(this, 'Enemy', sprite);
 };
+// Set up delegation to Entity
 Enemy.prototype = Object.create(Entity.prototype);
 Enemy.prototype.constructor = Enemy;
+// Customize Enemy Class
+// Place an Enemy in a random row.
+Enemy.prototype.generate = function() {
+  this.set_position(0, getRandomInt(1, 3));
+};
+Enemy.prototype.isOffScreen = function() {
+  console.log('isOffScreen ' + this.x_pos > options.width);
+  return this.x_pos > options.width;
+};
+// Update the enemy's position, required method for game
+// Parameter: dt, a time delta between ticks
 Enemy.prototype.update = function(dt) {
-  console.log('Entering ' + this.type + '.update');
-  var movement = options.move_by * dt;
-  this.x_pos = get_new_position(this.x_pos, movement, options.width, this.wrap);
+  //console.log('Entering ' + this.type + '.update');
+  this.x_pos += options.move_by * dt;
+  if (this.isOffScreen) this.generate();
 };
 
-// Now write your own player class
-// This class requires an update(), render() and
-// a handleInput() method.
-var Player = function(sprite, x, y) {
-  Entity.call(this, 'Player', sprite, x, y, false);
+// Our player
+var Player = function(sprite) {
+  Entity.call(this, 'Player', sprite);
+  this.col = 3;
+  this.row = 6;
+  this.move_x = 0;
+  this.move_y = 0;
+  this.move = false;
+  this.reset();
 };
+// Set up delegation to Entity
 Player.prototype = Object.create(Entity.prototype);
 Player.prototype.constructor = Player;
-Player.prototype.update = function() {
-  console.log('Entering ' + this.type + '.update');
-  var movement = 1;
-  if (this.move_x !== 0) {
-    movement = this.move_x * 101;
-    this.x_pos += movement;
+// Customize Player Class
+// Place Player in starting position centered at the bottom.
+Player.prototype.reset = function() {
+  var x = (this.col - 1) * options.space_width;
+  var y = (this.row - 1) * options.space_height;
+  console.log('Resetting Player to ' + x + ',' + y);
+  this.set_position(x, y);
+};
+Player.prototype.atBound = function() {
+  return this.row === 1 ||
+         this.row === 6 ||
+         this.col === 1 ||
+         this.col === 5;
+};
+Player.prototype.inBound = function(col_num, row_num) {
+  return col_num >= 1 &&
+         col_num <= 5 &&
+         row_num >= 1 &&
+         row_num <= 6;
+};
+Player.prototype.won = function() {
+  return this.row === 1;
+};
+Player.prototype.setDirection = function(move_axis, direction_value) {
+  if (move_axis === 'x') {
+    this.move_x = direction_value;
+    this.move_y = 0;
   }
-  if (this.move_y !== 0) {
-    movement = this.move_y * 83;
-    this.y_pos += movement;
+  else if (move_axis === 'y') {
+    this.move_x = 0;
+    this.move_y = direction_value;
   }
+};
+Player.prototype.toggleMove = function() {
+  this.move = ! this.move;
 };
 Player.prototype.handleInput = function(keyCode) {
-  console.log('Received ' + keyCode);
-  switch (keyCode) {
-    case "left":
-      this.move_x = -1;
-      break;
-    case "up":
-      this.move_y = -1;
-      break;
-    case "right":
-      this.move_x = 1;
-      break;
-    case "down":
-      this.move_y = 1;
-      break;
-    default:
-      break;
+  //if (! this.atBound()) {
+    switch (keyCode) {
+      case "left":
+        this.setDirection('x', -1);
+        break;
+      case "right":
+        this.setDirection('x', 1);
+        break;
+      case "up":
+        this.setDirection('y', -1);
+        break;
+      case "down":
+        this.setDirection('y', 1);
+        break;
+      default:
+        break;
+    }
+    console.log('Received ' + keyCode +
+                ' set move factors to ' +
+                this.move_x + ',' +  this.move_y);
+    this.toggleMove();
+  //}
+};
+Player.prototype.update = function() {
+  //console.log('Entering ' + this.type + '.update');
+  if (this.move) {
+    /*
+    if (this.move_x !== 0) {
+      console.log('X Pos ' + this.x_pos + ' + Move X ' + this.move_x + ' Width ' +  options.space_width + ' (' + this.move_x * options.space_width + ')' + '=' + this.x_pos + this.move_x * options.space_width);
+      //this.x_pos += this.move_x * options.space_width;
+    }
+    if (this.move_y !== 0) {
+      console.log('Y Pos ' + this.y_pos + ' + Move Y ' + this.move_y + ' Width ' +  options.space_width + ' (' + this.move_y * options.space_width + ')' + '=' + this.y_pos + this.move_y * options.space_width);
+      //this.y_pos += this.move_y * options.space_height;
+    }
+    */
+    var new_col = this.col + this.move_x * 1;
+    var new_row = this.row + this.move_y * 1;
+    console.log(this.col + this.move_x * 1);
+    console.log(this.row + this.move_y * 1);
+    if (this.inBound(new_col, new_row)) {
+      this.col += this.move_x * 1;
+      this.row += this.move_y * 1;
+      this.x_pos += this.move_x * options.space_width;
+      this.y_pos += this.move_y * options.space_height;
+    }
+    this.toggleMove();
   }
 };
 
-// Now instantiate your objects.
 // Place all enemy objects in an array called allEnemies
-// Place the player object in a variable called player
-var x = 0;
-var y = 0;
 var allEnemies = [];
-for (i = 1; i < 4; i++) {
-  y = i * options.space_height;
-  var enemies_per_row = Math.floor(options.num_enemies / 3);
-  for (i = 0; i < enemies_per_row; i++) {
-    x = getRandomInt(0, options.width) * options.space_width;
-    allEnemies.push(new Enemy('images/enemy-bug.png', x, y));
-  }
-  if (options.num_enemies % 3 !== 0) {
-    x = getRandomInt(0, options.width) * options.space_width;
-    allEnemies.push(new Enemy('images/enemy-bug.png', x, 2));
-  }
+// Distribute enemies over each of the three rows.
+for (i = 0; i < options.num_enemies; i++) {
+    //var enemy = new Enemy('images/enemy-bug.png');
+    //enemy.generate();
+    //allEnemies.push(enemy);
 }
 
-x = 2;
-y = 5;
-var player = new Player(options.player_image, x, y);
+// Place the player object in a variable called player
+var player = new Player(options.player_image);
 
 // This listens for key presses and sends the keys to your
 // Player.handleInput() method. You don't need to modify this.
