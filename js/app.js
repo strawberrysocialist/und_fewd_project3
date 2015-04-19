@@ -17,6 +17,7 @@ var options = {
     'images/char-boy.png'
   ],
   'max_items': 4,
+  'item_duration': [50, 150],
   'item_info': {
     'images/Gem Blue.png' : {'points': 10, 'lives': 0, 'blocking': false},
     'images/Gem Green.png' : {'points': 25, 'lives': 0, 'blocking': false},
@@ -252,6 +253,9 @@ var Item = function(sprite) {
   Entity.call(this, 'Item', sprite);
   this.generate();
   this.setDuration();
+  console.log('New Item at (' + this.x_pos +
+    ', ' + this.y_pos + ') in (' + this.col +
+    ', ' + this.row + ') for ' + this.duration + '.');
 };
 
 // Set up delegation to Entity
@@ -274,12 +278,23 @@ Item.prototype.generate = function() {
 };
 
 Item.prototype.setDuration = function() {
-  this.duration = getRandomInt(1000, 15000);
+  this.duration = getRandomInt(options.item_duration[0],
+    options.item_duration[1]);
+  console.log('Initial duration is ' + this.duration + '.');
 };
 
-Item.prototype.isDurationOver = function(dt) {
-  this.duration -= dt;
-  return this.duration > 0;
+Item.prototype.hasTimeLeft = function(dt) {
+  var milliseconds = Math.round(dt,0);
+  milliseconds = milliseconds === 0 ? 1 : milliseconds;
+  console.log('Subtracting ' + milliseconds +
+    ' from the current duration of ' + this.duration + '.');
+
+  this.duration -= milliseconds;
+  var isTimeLeft = this.duration > 0;
+  console.log('Duration now is ' + this.duration +
+    ' which has time left ' + isTimeLeft + '.');
+
+  return isTimeLeft;
 };
 
 Item.prototype.onCollision = function(i) {
@@ -288,6 +303,10 @@ Item.prototype.onCollision = function(i) {
     console.log('Player collided with Item' + i + ' at (' + this.row + ', ' + this.col + ') !');
   }
   return collided;
+};
+
+Item.prototype.render = function() {
+  Entity.prototype.render.call(this);
 };
 
 var UI = function(doc) {
@@ -338,20 +357,29 @@ UI.prototype.hideDialog = function() {
 };
 
 function generateItems(dt) {
-  var newItems = allItems.filter(function(obj) {
-    return obj.isDurationOver();
+  console.log('Initial size ' + allItems.length + '.');
+  allItems = allItems.filter(function(obj) {
+    return obj.hasTimeLeft(dt);
   });
+  /*
+  var newItems = allItems.filter(function(obj) {
+    return obj.hasTimeLeft(dt);
+  });
+  allItems = undefined;
   allItems = newItems;
-  newItems = undefined;
+  //newItems = undefined;
+  */
+  console.log('Purged size ' + allItems.length + '.');
 
   if (allItems.length < options.max_items) {
     var lastDigit = Math.trunc(dt % 5);
     if (lastDigit === 0) {
       var items = options.item_info;
-      var randomItemIndex = getRandomInt(0, Object.keys(items).length + 1);
+      var randomItemIndex = getRandomInt(0, Object.keys(items).length);
       var itemSprite = Object.keys(items)[randomItemIndex];
       allItems.push(new Item(itemSprite));
     }
+  console.log('Generated size ' + allItems.length + '.');
   }
 }
 
