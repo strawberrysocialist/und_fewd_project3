@@ -338,24 +338,13 @@ UI.prototype.hideDialog = function() {
 };
 
 function generateItems(dt) {
-  /**
-  var indicesToRemove = [];
-  // Check for Items with elapsed durations.
-  for (i = 0; i < allItems.length; i++) {
-    var item = allItems[i];
-    if (item.isDurationOver(dt)) {
-      indicesToRemove.push(i);
-    }
-  }
-  */
-  allItems = allItems.filter(function(obj) {
+  var newItems = allItems.filter(function(obj) {
     return obj.isDurationOver();
   });
+  allItems = newItems;
+  newItems = undefined;
 
   if (allItems.length < options.max_items) {
-    //if (dt % 5000 > 1000) {
-    //var lastDigit = Math.trunc(dt % 10);
-    //if (lastDigit === 0 || lastDigit === 5) {
     var lastDigit = Math.trunc(dt % 5);
     if (lastDigit === 0) {
       var items = options.item_info;
