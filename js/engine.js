@@ -79,8 +79,9 @@ var Engine = (function(global) {
      * on the entities themselves within your app.js file).
      */
     function update(dt) {
+        generateItems(dt);
         updateEntities(dt);
-        // checkCollisions();
+        checkCollisions();
     }
 
     /* This is called by the update function  and loops through all of the
@@ -94,7 +95,34 @@ var Engine = (function(global) {
         allEnemies.forEach(function(enemy) {
             enemy.update(dt);
         });
+
+        allItems.forEach(function(item) {
+            item.update(dt);
+        });
+
         player.update();
+    }
+
+    function checkCollisions() {
+      // Check if collided with an Enemy.
+      for (i = 0; i < allEnemies.length; i++) {
+        var enemy = allEnemies[i];
+        if (enemy.onCollision(i)) {
+          player.onCollision();
+          // Bail out of for loop.
+          break;
+        }
+      }
+
+      // Check if collided with an Item.
+      for (i = 0; i < allItems.length; i++) {
+        var item = allItems[i];
+        if (item.onCollision(i)) {
+          //player.onCollision();
+          // Bail out of for loop.
+          break;
+        }
+      }
     }
 
     /* This function initially draws the "game level", it will then call
@@ -150,6 +178,10 @@ var Engine = (function(global) {
          */
         allEnemies.forEach(function(enemy) {
             enemy.render();
+        });
+
+        allItems.forEach(function(item) {
+            item.render();
         });
 
         player.render();

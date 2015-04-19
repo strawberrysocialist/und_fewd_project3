@@ -83,6 +83,15 @@ Enemy.prototype.isOffScreen = function() {
   return this.x_pos > options.width;
 };
 
+Enemy.prototype.onCollision = function(i) {
+  var collided = player.row == this.row && player.col == this.col;
+  if (collided) {
+    console.log('Enemy' + i + ' at (' + this.row + ', ' + this.col + ') hit Player!');
+    ui.showDialog('An Enemy got you!' );
+  }
+  return collided;
+};
+
 // Update the enemy's position, required method for game
 // Parameter: dt, a time delta between ticks
 Enemy.prototype.update = function(dt) {
@@ -147,21 +156,18 @@ Player.prototype.updateLives = function(lives) {
   $('#lives').html(this.remainingLives);
 };
 
-Player.prototype.isHit = function() {
-  var wasHit = checkCollisions();
-  if (wasHit) {
-    this.updateLives(-1);
-    this.reset();
-  }
-  return wasHit;
+Player.prototype.onCollision = function() {
+  this.isHit = true;
+  this.updateLives(-1);
+  this.reset();
+  return this.isHit;
 };
 
 Player.prototype.isLifeOver = function() {
-  var wasHit = this.isHit();
-  var lifeFinished = wasHit || this.hasWon();
+  var lifeFinished = this.isHit || this.hasWon();
   game_over = this.hasWon() || this.remainingLives === 0;
 
-  if (wasHit && game_over) {
+  if (this.isHit && game_over) {
     ui.showDialog('Oops, you died...');
   }
 
@@ -269,7 +275,16 @@ Item.prototype.setDuration = function() {
 };
 
 Item.prototype.isDurationOver = function(dt) {
-  return this.duration - dt > 0;
+  this.duration -= dt;
+  return this.duration > 0;
+};
+
+Item.prototype.onCollision = function(i) {
+  var collided = player.row == this.row && player.col == this.col;
+  if (collided) {
+    console.log('Player collided with Item' + i + ' at (' + this.row + ', ' + this.col + ') !');
+  }
+  return collided;
 };
 
 var UI = function(doc) {
@@ -321,16 +336,24 @@ UI.prototype.hideDialog = function() {
 
 function checkCollisions() {
   var isCollision = false;
+  // Check if collided with an Enemy.
   for (i = 0; i < allEnemies.length; i++) {
     var enemy = allEnemies[i];
-    isCollision = enemy.row == player.row && enemy.col == player.col;
+    isCollision = enemy.onCollision(i);
     if (isCollision) {
-      console.log('Enemy' + i + ' at (' + enemy.row + ', ' + enemy.col + ') hit Player!');
-      ui.showDialog('An Enemy got you!' );
+      player.hit = enemy;
       // Bail out of for loop.
       break;
     }
   }
+
+  // Check if collided with an Item.
+  for (i = 0; i < allItems.length; i++) {
+    var item = allItems[i];
+    // Bail out of for loop if collided.
+    if (item.onCollision(i)) break;
+  }
+
   return isCollision;
 }
 
@@ -394,6 +417,7 @@ function start(restart) {
 }
 
 var allEnemies;
+var allItems;
 var player;
 var game_over;
 var ui;
