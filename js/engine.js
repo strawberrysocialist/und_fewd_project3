@@ -79,8 +79,8 @@ var Engine = (function(global) {
      * on the entities themselves within your app.js file).
      */
     function update(dt) {
-        generateItems(dt);
         updateEntities(dt);
+        generateItems(dt);
         checkCollisions();
     }
 
@@ -96,9 +96,11 @@ var Engine = (function(global) {
             enemy.update(dt);
         });
 
+        /**
         allItems.forEach(function(item) {
             item.update(dt);
         });
+        */
 
         player.update();
     }

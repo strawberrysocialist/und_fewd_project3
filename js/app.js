@@ -62,6 +62,7 @@ Entity.prototype.render = function() {
 // Enemies our player must avoid
 var Enemy = function(sprite) {
   Entity.call(this, 'Enemy', sprite);
+  this.generate();
 };
 
 // Set up delegation to Entity
@@ -249,6 +250,8 @@ Player.prototype.render = function() {
 
 var Item = function(sprite) {
   Entity.call(this, 'Item', sprite);
+  this.generate();
+  this.setDuration();
 };
 
 // Set up delegation to Entity
@@ -334,27 +337,33 @@ UI.prototype.hideDialog = function() {
   this.showDialog(' ');
 };
 
-function checkCollisions() {
-  var isCollision = false;
-  // Check if collided with an Enemy.
-  for (i = 0; i < allEnemies.length; i++) {
-    var enemy = allEnemies[i];
-    isCollision = enemy.onCollision(i);
-    if (isCollision) {
-      player.hit = enemy;
-      // Bail out of for loop.
-      break;
-    }
-  }
-
-  // Check if collided with an Item.
+function generateItems(dt) {
+  /**
+  var indicesToRemove = [];
+  // Check for Items with elapsed durations.
   for (i = 0; i < allItems.length; i++) {
     var item = allItems[i];
-    // Bail out of for loop if collided.
-    if (item.onCollision(i)) break;
+    if (item.isDurationOver(dt)) {
+      indicesToRemove.push(i);
+    }
   }
+  */
+  allItems = allItems.filter(function(obj) {
+    return obj.isDurationOver();
+  });
 
-  return isCollision;
+  if (allItems.length < options.max_items) {
+    //if (dt % 5000 > 1000) {
+    //var lastDigit = Math.trunc(dt % 10);
+    //if (lastDigit === 0 || lastDigit === 5) {
+    var lastDigit = Math.trunc(dt % 5);
+    if (lastDigit === 0) {
+      var items = options.item_info;
+      var randomItemIndex = getRandomInt(0, Object.keys(items).length + 1);
+      var itemSprite = Object.keys(items)[randomItemIndex];
+      allItems.push(new Item(itemSprite));
+    }
+  }
 }
 
 function isGameOver() {
@@ -386,9 +395,11 @@ function start(restart) {
   // Distribute enemies over each of the three rows.
   for (i = 0; i < options.num_enemies; i++) {
       var enemy = new Enemy('images/enemy-bug.png');
-      enemy.generate();
+      //enemy.generate();
       allEnemies.push(enemy);
   }
+
+  allItems = [];
 
   // Only create a new player on first start.
   if (typeof player === 'undefined') {
