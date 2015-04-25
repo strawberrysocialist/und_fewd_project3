@@ -249,6 +249,7 @@ Player.prototype.render = function() {
   }
 };
 
+/** Remove Item development
 var Item = function(sprite) {
   Entity.call(this, 'Item', sprite);
   this.generate();
@@ -308,6 +309,7 @@ Item.prototype.onCollision = function(i) {
 Item.prototype.render = function() {
   Entity.prototype.render.call(this);
 };
+*/
 
 var UI = function(doc) {
   this.doc = doc;
@@ -356,19 +358,12 @@ UI.prototype.hideDialog = function() {
   this.showDialog(' ');
 };
 
+/** Remove Item development
 function generateItems(dt) {
   console.log('Initial size ' + allItems.length + '.');
   allItems = allItems.filter(function(obj) {
     return obj.hasTimeLeft(dt);
   });
-  /*
-  var newItems = allItems.filter(function(obj) {
-    return obj.hasTimeLeft(dt);
-  });
-  allItems = undefined;
-  allItems = newItems;
-  //newItems = undefined;
-  */
   console.log('Purged size ' + allItems.length + '.');
 
   if (allItems.length < options.max_items) {
@@ -382,6 +377,7 @@ function generateItems(dt) {
   console.log('Generated size ' + allItems.length + '.');
   }
 }
+*/
 
 function isGameOver() {
   var restart = false;
@@ -416,7 +412,7 @@ function start(restart) {
       allEnemies.push(enemy);
   }
 
-  allItems = [];
+  //allItems = [];
 
   // Only create a new player on first start.
   if (typeof player === 'undefined') {
@@ -445,7 +441,7 @@ function start(restart) {
 }
 
 var allEnemies;
-var allItems;
+//var allItems;
 var player;
 var game_over;
 var ui;

@@ -80,7 +80,7 @@ var Engine = (function(global) {
      */
     function update(dt) {
         updateEntities(dt);
-        generateItems(dt);
+        //generateItems(dt);
         checkCollisions();
     }
 
@@ -116,6 +116,7 @@ var Engine = (function(global) {
         }
       }
 
+      /** Remove Item development
       // Check if collided with an Item.
       for (i = 0; i < allItems.length; i++) {
         var item = allItems[i];
@@ -125,6 +126,7 @@ var Engine = (function(global) {
           break;
         }
       }
+      */
     }
 
     /* This function initially draws the "game level", it will then call
@@ -182,9 +184,11 @@ var Engine = (function(global) {
             enemy.render();
         });
 
+        /** Remove Item development
         allItems.forEach(function(item) {
             item.render();
         });
+        */
 
         player.render();
     }
