@@ -80,7 +80,6 @@ var Engine = (function(global) {
      */
     function update(dt) {
         updateEntities(dt);
-        //generateItems(dt);
         checkCollisions();
     }
 
@@ -95,12 +94,6 @@ var Engine = (function(global) {
         allEnemies.forEach(function(enemy) {
             enemy.update(dt);
         });
-
-        /**
-        allItems.forEach(function(item) {
-            item.update(dt);
-        });
-        */
 
         player.update();
     }
@@ -183,12 +176,6 @@ var Engine = (function(global) {
         allEnemies.forEach(function(enemy) {
             enemy.render();
         });
-
-        /** Remove Item development
-        allItems.forEach(function(item) {
-            item.render();
-        });
-        */
 
         player.render();
     }

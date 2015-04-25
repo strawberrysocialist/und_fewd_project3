@@ -7,27 +7,7 @@ var options = {
   'num_enemies': 4,
   'move_by': 75,
   'increase_move_by': 100,
-  'default_player_image': 'images/char-boy.png',
-  'player_images': [
-    'images/char-boy.png',
-    'images/char-cat-girl.png',
-    'images/char-horn-girl.png',
-    'images/char-pink-girl.png',
-    'images/char-princess-girl.png',
-    'images/char-boy.png'
-  ],
-  'max_items': 4,
-  'item_duration': [50, 150],
-  'item_info': {
-    'images/Gem Blue.png' : {'points': 10, 'lives': 0, 'blocking': false},
-    'images/Gem Green.png' : {'points': 25, 'lives': 0, 'blocking': false},
-    'images/Gem Orange.png' : {'points': 1, 'lives': 0, 'blocking': false},
-    'images/Heart.png' : {'points': 0, 'lives': 1, 'blocking': false},
-    'images/Key.png' : {},
-    'images/Rock.png' : {'points': 0, 'lives': 0, 'blocking': true},
-    'images/Selector.png' : {},
-    'images/Star.png' : {'points': 50, 'lives': 0, 'blocking': false}
-  }
+  'default_player_image': 'images/char-boy.png'
 };
 
 function getRandomInt(min, max) {
@@ -249,68 +229,6 @@ Player.prototype.render = function() {
   }
 };
 
-/** Remove Item development
-var Item = function(sprite) {
-  Entity.call(this, 'Item', sprite);
-  this.generate();
-  this.setDuration();
-  console.log('New Item at (' + this.x_pos +
-    ', ' + this.y_pos + ') in (' + this.col +
-    ', ' + this.row + ') for ' + this.duration + '.');
-};
-
-// Set up delegation to Entity
-Item.prototype = Object.create(Entity.prototype);
-Item.prototype.constructor = Item;
-
-Item.prototype.generate = function() {
-  // Get a random x coordinate within any column.
-  this.col = getRandomInt(1, 5);
-  var x = (this.col - 1)  * options.space_height;
-  // Offset the y value a bit so it is centered.
-  var x_center_in_col = x - options.space_height / 4;
-
-  // Get a random y coordinate within any row.
-  this.row = getRandomInt(1, 6);
-  var y = (this.row - 1)  * options.space_height;
-  // Offset the y value a bit so it is centered.
-  var y_center_in_row = y - options.space_height / 4;
-  this.setPosition(x_center_in_col, y_center_in_row);
-};
-
-Item.prototype.setDuration = function() {
-  this.duration = getRandomInt(options.item_duration[0],
-    options.item_duration[1]);
-  console.log('Initial duration is ' + this.duration + '.');
-};
-
-Item.prototype.hasTimeLeft = function(dt) {
-  var milliseconds = Math.round(dt,0);
-  milliseconds = milliseconds === 0 ? 1 : milliseconds;
-  console.log('Subtracting ' + milliseconds +
-    ' from the current duration of ' + this.duration + '.');
-
-  this.duration -= milliseconds;
-  var isTimeLeft = this.duration > 0;
-  console.log('Duration now is ' + this.duration +
-    ' which has time left ' + isTimeLeft + '.');
-
-  return isTimeLeft;
-};
-
-Item.prototype.onCollision = function(i) {
-  var collided = player.row == this.row && player.col == this.col;
-  if (collided) {
-    console.log('Player collided with Item' + i + ' at (' + this.row + ', ' + this.col + ') !');
-  }
-  return collided;
-};
-
-Item.prototype.render = function() {
-  Entity.prototype.render.call(this);
-};
-*/
-
 var UI = function(doc) {
   this.doc = doc;
   this.$holder = $('#menu');
@@ -358,27 +276,6 @@ UI.prototype.hideDialog = function() {
   this.showDialog(' ');
 };
 
-/** Remove Item development
-function generateItems(dt) {
-  console.log('Initial size ' + allItems.length + '.');
-  allItems = allItems.filter(function(obj) {
-    return obj.hasTimeLeft(dt);
-  });
-  console.log('Purged size ' + allItems.length + '.');
-
-  if (allItems.length < options.max_items) {
-    var lastDigit = Math.trunc(dt % 5);
-    if (lastDigit === 0) {
-      var items = options.item_info;
-      var randomItemIndex = getRandomInt(0, Object.keys(items).length);
-      var itemSprite = Object.keys(items)[randomItemIndex];
-      allItems.push(new Item(itemSprite));
-    }
-  console.log('Generated size ' + allItems.length + '.');
-  }
-}
-*/
-
 function isGameOver() {
   var restart = false;
   if (player.isLifeOver() && game_over) {
@@ -412,8 +309,6 @@ function start(restart) {
       allEnemies.push(enemy);
   }
 
-  //allItems = [];
-
   // Only create a new player on first start.
   if (typeof player === 'undefined') {
     // Place the player object in a variable called player
@@ -441,7 +336,6 @@ function start(restart) {
 }
 
 var allEnemies;
-//var allItems;
 var player;
 var game_over;
 var ui;
